@@ -361,7 +361,7 @@
         nameInput.style.cssText = 'padding:4px 6px; border:1px solid #ccc; border-radius:3px; font-size:12px;';
 
         const urlInput = document.createElement('input');
-        urlInput.placeholder = '搜索URL（用 %s 代替关键词）';
+        urlInput.placeholder = '搜索URL（用 %s 代替关键词，例如：https://www.google.com/search?q=%s）';
         urlInput.style.cssText = 'padding:4px 6px; border:1px solid #ccc; border-radius:3px; font-size:12px;';
 
         const iconInput = document.createElement('input');
@@ -484,7 +484,7 @@
                 btns.push(copyBtn);
             }
 
-            getEnabledEngines().forEach(e => btns.push({ icon: e.icon, text: e.name, noIcon: !showEngineIcons, handler: () => { open(e.url.replace('%s', encodeURIComponent(text))); getSelection().empty(); hideToolbar(); } }));
+            getEnabledEngines().forEach(e => btns.push({ icon: e.icon, text: e.name, noIcon: !showEngineIcons, handler: () => { open(e.url.replace(/%s|\{keyword\}|\{searchTerms\}|\$\{searchTerms\}|\{query\}|%KEYWORD%/i, encodeURIComponent(text))); getSelection().empty(); hideToolbar(); } }));
             btns.push({ icon: ICONS.settings, text: '', title: '设置', alwaysShowIcon: true, handler: showSettingsPanel });
         }
 
