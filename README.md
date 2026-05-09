@@ -10,7 +10,7 @@ ddrwin 的 Greasy Fork 油猴脚本仓库。
 |------|---------|------|-----------------|
 | **Baidu++** | v2.2 | 百度搜索结果页增强：添加磁力、种子、网盘、知乎、小红书等多引擎搜索；Google/Bing 互搜；自动翻页；去广告 | [Greasy Fork](https://greasyfork.org/scripts/396960) |
 | **豆包 & DeepSeek 自动专家** | v4.0 | 豆包默认思考模式 + 遥测拦截 + 全宽；DeepSeek 自动专家模式 + 智能搜索关闭 + 全宽 | [Greasy Fork](https://greasyfork.org/scripts/538175) |
-| **极简划词搜索** | v2.5.0 | 超小尺寸悬浮窗，支持划词搜索、复制、打开链接；拖拽链接/图片保存；预定义高亮样式；图标显示开关；自定义搜索引擎 | [Greasy Fork](https://greasyfork.org/scripts/566626) |
+| **极简划词搜索** | v2.5.1 | 超小尺寸悬浮窗，支持划词搜索、复制、打开链接；拖拽链接/图片保存；预定义高亮样式；图标显示开关；自定义搜索引擎 | [Greasy Fork](https://greasyfork.org/scripts/566626) |
 | **知乎++** | v4.0 | 知乎增强：清理标题括号数字、隐藏消息/私信、解除复制限制、护眼色、卡片化设计 | [Greasy Fork](https://greasyfork.org/scripts/571059) |
 | **DeepSeek Token 千分位** | v8.6 | DeepSeek 用量页 Token 数字千分位格式化 + 缓存命中率可视化 | - |
 | **DeepSeek 侧边栏永恒守护** | v2.5 | DeepSeek 侧边栏保持展开，SPA 兼容 | - |
@@ -33,12 +33,17 @@ ddrwin 的 Greasy Fork 油猴脚本仓库。
 
 ```
 greasyfork-scripts/
-├── README.md
-├── 脚本名称/          # 每个脚本一个目录
-│   ├── 脚本名.user.js   # 最新版本
-│   └── archive/         # 历史版本存档
+├── README.md             # 本文件，脚本总览
+├── docs/                 # 公共文档
+│   └── case_logs/        # 案例日志
+├── 脚本名称/             # 每个脚本一个目录
+│   ├── README.md         # 脚本说明（版本、功能、更新日志）
+│   ├── 脚本名.user.js    # 最新版本
+│   └── archive/          # 历史版本存档
 ├── ...
 ```
+
+各脚本目录均包含 `README.md`，记录版本号、功能说明和更新日志。
 
 ## 许可证
 
