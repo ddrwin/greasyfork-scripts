@@ -1,0 +1,13 @@
+# Windows
+Thumbs.db
+*.lnk
+Desktop.ini
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+*.local
