@@ -11,3 +11,8 @@ Desktop.ini
 # Environment
 .env
 *.local
+
+# Private scripts (stored in separate private repo)
+绿联NAS自动重连/
+Chiphell_高亮关键词/
+去除雪球弹窗/
