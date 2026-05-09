@@ -240,18 +240,23 @@
 
         const listDiv = document.createElement('div');
         listDiv.style.cssText = 'margin-bottom:12px; display:grid; grid-template-columns:repeat(2,1fr); gap:6px 12px;';
-        getAllEngines().forEach(engine => {
-            const label = document.createElement('label');
-            label.style.cssText = 'display:flex; align-items:center; cursor:pointer; white-space:nowrap;';
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.className = 'engine-cb';
-            cb.value = engine.name;
-            cb.checked = enabledEngineNames.includes(engine.name);
-            cb.style.cssText = 'margin-right:4px; vertical-align:middle;';
-            label.append(cb, document.createTextNode(engine.name));
-            listDiv.appendChild(label);
-        });
+        // 渲染引擎复选框列表（新增自定义引擎后需重新调用）
+        const renderEngineCheckboxes = () => {
+            listDiv.innerHTML = '';
+            getAllEngines().forEach(engine => {
+                const label = document.createElement('label');
+                label.style.cssText = 'display:flex; align-items:center; cursor:pointer; white-space:nowrap;';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'engine-cb';
+                cb.value = engine.name;
+                cb.checked = enabledEngineNames.includes(engine.name);
+                cb.style.cssText = 'margin-right:4px; vertical-align:middle;';
+                label.append(cb, document.createTextNode(engine.name));
+                listDiv.appendChild(label);
+            });
+        };
+        renderEngineCheckboxes();
         panelDiv.appendChild(listDiv);
 
         const addCheckboxDiv = (text, checked) => {
@@ -366,6 +371,7 @@
             customEngines = list;
             nameInput.value = ''; urlInput.value = ''; iconInput.value = '';
             renderCustomList();
+            renderEngineCheckboxes(); // ★ 刷新复选框列表，让新引擎显示并可勾选
             // 默认勾选新引擎
             if (!enabledEngineNames.includes(n)) {
                 enabledEngineNames.push(n);
