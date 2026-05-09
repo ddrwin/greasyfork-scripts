@@ -3,7 +3,7 @@
 // @description  超小尺寸悬浮窗，支持划词搜索、复制、打开链接；拖拽链接/图片保存；预定义六组高亮样式（可自定义），动态添加关键词增量高亮，无闪烁；自动高亮默认关闭，加粗样式默认注释；工具栏默认手动隐藏；可配置显示的搜索引擎；可调整按钮顺序；可全局开启/关闭高亮功能；极致性能优化
 // @icon         https://www.baidu.com/favicon.ico
 // @namespace    http://tampermonkey.net/
-// @version      2.4.3
+// @version      2.5.0
 // @author       ddrwin
 // @license      MIT
 // @match        *://*/*
@@ -32,7 +32,7 @@
 // @note         2026.3.3  V2.2.2 修复预定义关键词未自动高亮的问题；增加 MutationObserver 监听页面变化，动态内容自动高亮
 // @note         2026.3.3  V2.2.3 增加自动高亮开关（默认关闭）；加粗样式默认注释；工具栏消失模式默认改为手动；优化 MutationObserver 防抖
 // @note         2026.3.3  V2.2.4 重新排列高亮组颜色（科普/硬件/人工智能颜色互换）；修复自动高亮开关未完全生效的问题；更换高亮图标
-// @note         2026.3.3  V2.2.5 再次修复自动高亮开关：仅在开启时加载预定义关键词；清空所有分组关键词数组；更换太阳图标
+// @note         2026.3.3  V2.2.5 再次修正自动高亮开关：仅在开启时加载预定义关键词；清空所有分组关键词数组；更换太阳图标
 // @note         2026.3.3  V2.2.6 分组名称改为颜色描述；再次修正太阳图标；点击高亮后工具栏立即消失
 // @note         2026.3.3  V2.2.7 更换高亮图标为用户指定版本；交换复制和高亮按钮位置
 // @note         2026.3.3  V2.2.8 增加工具栏偏移开关：可设置左移/下移多少个图标位置（基于按钮实际尺寸）
@@ -46,6 +46,7 @@
 // @note         2026.3.7  V2.4.1 调整按钮顺序：当选中文本为 URL 时，“打开”按钮置于最左侧（高亮和复制之前）
 // @note         2026.3.7  V2.4.2 增加“启用高亮功能”开关；代码优化：合并重复样式、精简函数、缓存正则、减少代码量
 // @note         2026.4.8  V2.4.3 添加bilibili、豆瓣、知乎和 GitHub 搜索引擎；设置面板自适应双列布局自动换行
+// @note         2026.5.9  V2.5.0 增加图标显示/隐藏开关；添加自定义搜索引擎功能（增删改、GM存储持久化）
 // @downloadURL https://update.greasyfork.org/scripts/566626/%E6%9E%81%E7%AE%80%E5%88%92%E8%AF%8D%E5%B7%A5%E5%85%B7%E6%A0%8F.user.js
 // @updateURL https://update.greasyfork.org/scripts/566626/%E6%9E%81%E7%AE%80%E5%88%92%E8%AF%8D%E5%B7%A5%E5%85%B7%E6%A0%8F.meta.js
 // ==/UserScript==
@@ -73,6 +74,7 @@
         { name: "深绿底白字", keywords: [], style: "background-color:#008373; color:#FFFFFF; /* font-weight:bold; */" }
     ];
 
+    // ==================== 内置搜索引擎列表 ====================
     const ALL_SEARCH_ENGINES = [
         { name: '必应', icon: '🔍', url: 'https://www.bing.com/search?q=%s' },
         { name: '百度', icon: '🔍', url: 'https://www.baidu.com/s?wd=%s' },
@@ -95,11 +97,22 @@
     let buttonOrder = GM_getValue('button_order_config', 'copy-first');
     let highlightEnabled = GM_getValue('highlight_enabled', true);
 
+    // V2.5.0 新增：图标显示开关（默认显示），设置齿轮图标不受影响
+    let showEngineIcons = GM_getValue('show_engine_icons', true);
+    // V2.5.0 新增：自定义搜索引擎列表 [{ name, url, icon }]
+    let customEngines = GM_getValue('custom_engines', []);
+
     const saveSearchEngineConfig = (v) => GM_setValue('search_engines_config', v);
     const saveButtonOrderConfig = (v) => GM_setValue('button_order_config', v);
     const saveHighlightEnabled = (v) => GM_setValue('highlight_enabled', v);
+    const saveShowEngineIcons = (v) => GM_setValue('show_engine_icons', v);
+    const saveCustomEngines = (v) => GM_setValue('custom_engines', v);
 
-    const getEnabledEngines = () => ALL_SEARCH_ENGINES.filter(e => enabledEngineNames.includes(e.name));
+    // 获取所有引擎（内置 + 自定义），供工具栏渲染
+    const getAllEngines = () => [...ALL_SEARCH_ENGINES, ...customEngines];
+
+    // 获取已启用的引擎（内置 + 自定义）
+    const getEnabledEngines = () => getAllEngines().filter(e => enabledEngineNames.includes(e.name));
 
     // ==================== 高亮管理 ====================
     let highlights = [], nextStyleIndex = 0, highlightTimer, highlightDebounceTimer;
@@ -227,11 +240,12 @@
 
         const listDiv = document.createElement('div');
         listDiv.style.cssText = 'margin-bottom:12px; display:grid; grid-template-columns:repeat(2,1fr); gap:6px 12px;';
-        ALL_SEARCH_ENGINES.forEach(engine => {
+        getAllEngines().forEach(engine => {
             const label = document.createElement('label');
             label.style.cssText = 'display:flex; align-items:center; cursor:pointer; white-space:nowrap;';
             const cb = document.createElement('input');
             cb.type = 'checkbox';
+            cb.className = 'engine-cb';
             cb.value = engine.name;
             cb.checked = enabledEngineNames.includes(engine.name);
             cb.style.cssText = 'margin-right:4px; vertical-align:middle;';
@@ -240,24 +254,130 @@
         });
         panelDiv.appendChild(listDiv);
 
-        const addCheckbox = (text, checked) => {
+        const addCheckboxDiv = (text, checked) => {
             const div = document.createElement('div');
-            div.style.cssText = 'margin-bottom:8px; border-top:1px solid #eee; padding-top:8px;';
-            const label = document.createElement('label');
-            label.style.cssText = 'display:flex; align-items:center; cursor:pointer;';
+            div.style.cssText = 'display:flex; align-items:center; cursor:pointer; margin-bottom:4px;';
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = checked;
-            cb.style.cssText = 'margin-right:6px; vertical-align:middle;';
-            label.append(cb, document.createTextNode(text));
-            div.appendChild(label);
-            panelDiv.appendChild(div);
-            return cb;
+            cb.style.cssText = 'margin-right:4px; vertical-align:middle;';
+            div.append(cb, document.createTextNode(text));
+            return { div, cb };
         };
 
-        const highlightCb = addCheckbox('启用高亮功能', highlightEnabled);
-        const orderCb = addCheckbox('高亮按钮在前（默认复制在前）', buttonOrder === 'highlight-first');
+        // ---- 附加选项 ----
+        const extraDiv = document.createElement('div');
+        extraDiv.style.cssText = 'margin-bottom:8px; border-top:1px solid #eee; padding-top:8px;';
 
+        const iconDiv = document.createElement('label');
+        iconDiv.style.cssText = 'display:flex; align-items:center; cursor:pointer; margin-bottom:6px;';
+        const iconCb = document.createElement('input');
+        iconCb.type = 'checkbox';
+        iconCb.checked = showEngineIcons;
+        iconCb.style.cssText = 'margin-right:6px; vertical-align:middle;';
+        iconDiv.append(iconCb, document.createTextNode('显示引擎图标（关闭后工具栏更短）'));
+
+        const highlightDiv = document.createElement('label');
+        highlightDiv.style.cssText = 'display:flex; align-items:center; cursor:pointer; margin-bottom:6px;';
+        const hlCb = document.createElement('input');
+        hlCb.type = 'checkbox';
+        hlCb.checked = highlightEnabled;
+        hlCb.style.cssText = 'margin-right:6px; vertical-align:middle;';
+        highlightDiv.append(hlCb, document.createTextNode('启用高亮功能'));
+
+        const orderDiv = document.createElement('label');
+        orderDiv.style.cssText = 'display:flex; align-items:center; cursor:pointer; margin-bottom:6px;';
+        const ordCb = document.createElement('input');
+        ordCb.type = 'checkbox';
+        ordCb.checked = buttonOrder === 'highlight-first';
+        ordCb.style.cssText = 'margin-right:6px; vertical-align:middle;';
+        orderDiv.append(ordCb, document.createTextNode('高亮按钮在前（默认复制在前）'));
+
+        extraDiv.append(iconDiv, highlightDiv, orderDiv);
+        panelDiv.appendChild(extraDiv);
+
+        // ---- 自定义搜索引擎 ----
+        const customDiv = document.createElement('div');
+        customDiv.style.cssText = 'border-top:1px solid #eee; padding-top:8px; margin-bottom:8px;';
+        const customTitle = document.createElement('div');
+        customTitle.style.cssText = 'font-weight:bold; margin-bottom:6px; font-size:13px;';
+        customTitle.textContent = '自定义引擎';
+        customDiv.appendChild(customTitle);
+
+        const customListDiv = document.createElement('div');
+        customListDiv.style.cssText = 'margin-bottom:6px; max-height:150px; overflow-y:auto;';
+        const renderCustomList = () => {
+            customListDiv.innerHTML = '';
+            const engines = GM_getValue('custom_engines', []);
+            if (!engines.length) {
+                customListDiv.textContent = '(暂无自定义引擎)';
+                customListDiv.style.cssText += ';color:#999;font-size:12px;margin-bottom:6px;max-height:150px;overflow-y:auto;';
+                return;
+            }
+            engines.forEach((e, i) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:3px; font-size:12px;';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = `${e.icon || '🔍'} ${e.name}`;
+                nameSpan.style.cssText = 'flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+                const delBtn = document.createElement('button');
+                delBtn.textContent = '✕';
+                delBtn.style.cssText = 'background:none; border:none; cursor:pointer; color:#c00; font-size:13px; padding:0 4px;';
+                delBtn.addEventListener('click', () => {
+                    const list = GM_getValue('custom_engines', []);
+                    list.splice(i, 1);
+                    GM_setValue('custom_engines', list);
+                    customEngines = list;
+                    renderCustomList();
+                });
+                row.append(nameSpan, delBtn);
+                customListDiv.appendChild(row);
+            });
+        };
+        renderCustomList();
+        customDiv.appendChild(customListDiv);
+
+        // 添加自定义引擎表单
+        const addFormDiv = document.createElement('div');
+        addFormDiv.style.cssText = 'display:flex; flex-direction:column; gap:4px; font-size:12px;';
+
+        const nameInput = document.createElement('input');
+        nameInput.placeholder = '引擎名称（如：Google）';
+        nameInput.style.cssText = 'padding:4px 6px; border:1px solid #ccc; border-radius:3px; font-size:12px;';
+
+        const urlInput = document.createElement('input');
+        urlInput.placeholder = '搜索URL（用 %s 代替关键词）';
+        urlInput.style.cssText = 'padding:4px 6px; border:1px solid #ccc; border-radius:3px; font-size:12px;';
+
+        const iconInput = document.createElement('input');
+        iconInput.placeholder = '图标URL（可选，默认 🔍）';
+        iconInput.style.cssText = 'padding:4px 6px; border:1px solid #ccc; border-radius:3px; font-size:12px;';
+
+        const addBtn = document.createElement('button');
+        addBtn.textContent = '添加引擎';
+        addBtn.style.cssText = 'background:#008373; color:#fff; border:none; border-radius:3px; padding:4px 8px; cursor:pointer; font-size:12px; align-self:flex-end;';
+        addBtn.addEventListener('click', () => {
+            const n = nameInput.value.trim();
+            const u = urlInput.value.trim();
+            if (!n || !u) return;
+            const list = GM_getValue('custom_engines', []);
+            list.push({ name: n, url: u, icon: iconInput.value.trim() || '🔍' });
+            GM_setValue('custom_engines', list);
+            customEngines = list;
+            nameInput.value = ''; urlInput.value = ''; iconInput.value = '';
+            renderCustomList();
+            // 默认勾选新引擎
+            if (!enabledEngineNames.includes(n)) {
+                enabledEngineNames.push(n);
+                saveSearchEngineConfig(enabledEngineNames);
+            }
+        });
+
+        addFormDiv.append(nameInput, urlInput, iconInput, addBtn);
+        customDiv.appendChild(addFormDiv);
+        panelDiv.appendChild(customDiv);
+
+        // ---- 保存/取消按钮 ----
         const btnDiv = document.createElement('div');
         btnDiv.style.cssText = 'display:flex; justify-content:flex-end; gap:8px;';
 
@@ -265,12 +385,14 @@
         saveBtn.textContent = '保存';
         saveBtn.style.cssText = 'background:#008373; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:13px;';
         saveBtn.addEventListener('click', () => {
-            const checkboxes = panelDiv.querySelectorAll('input[type="checkbox"]');
-            enabledEngineNames = [...checkboxes].slice(0, ALL_SEARCH_ENGINES.length).filter(cb => cb.checked).map(cb => cb.value);
+            const checkboxes = panelDiv.querySelectorAll('.engine-cb');
+            enabledEngineNames = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value);
             saveSearchEngineConfig(enabledEngineNames);
-            highlightEnabled = checkboxes[ALL_SEARCH_ENGINES.length].checked;
+            showEngineIcons = iconCb.checked;
+            saveShowEngineIcons(showEngineIcons);
+            highlightEnabled = hlCb.checked;
             saveHighlightEnabled(highlightEnabled);
-            buttonOrder = checkboxes[ALL_SEARCH_ENGINES.length + 1].checked ? 'highlight-first' : 'copy-first';
+            buttonOrder = ordCb.checked ? 'highlight-first' : 'copy-first';
             saveButtonOrderConfig(buttonOrder);
             panelDiv.style.display = 'none';
         });
@@ -292,10 +414,8 @@
         const panelDiv = settingsPanelRoot.querySelector('div');
         if (!panelDiv) return;
 
-        const cbs = panelDiv.querySelectorAll('input[type="checkbox"]');
-        ALL_SEARCH_ENGINES.forEach((e, i) => cbs[i].checked = enabledEngineNames.includes(e.name));
-        cbs[ALL_SEARCH_ENGINES.length].checked = highlightEnabled;
-        cbs[ALL_SEARCH_ENGINES.length + 1].checked = buttonOrder === 'highlight-first';
+        const cbs = panelDiv.querySelectorAll('input.engine-cb');
+        getAllEngines().forEach((e, i) => { if (cbs[i]) cbs[i].checked = enabledEngineNames.includes(e.name); });
 
         const rect = toolbar.getBoundingClientRect();
         let left = rect.left, top = rect.bottom + 5;
@@ -348,8 +468,8 @@
                 btns.push(copyBtn);
             }
 
-            getEnabledEngines().forEach(e => btns.push({ icon: e.icon, text: e.name, handler: () => { open(e.url.replace('%s', encodeURIComponent(text))); getSelection().empty(); hideToolbar(); } }));
-            btns.push({ icon: ICONS.settings, text: '', title: '设置', handler: showSettingsPanel });
+            getEnabledEngines().forEach(e => btns.push({ icon: e.icon, text: e.name, noIcon: !showEngineIcons, handler: () => { open(e.url.replace('%s', encodeURIComponent(text))); getSelection().empty(); hideToolbar(); } }));
+            btns.push({ icon: ICONS.settings, text: '', title: '设置', alwaysShowIcon: true, handler: showSettingsPanel });
         }
 
         btns.forEach((btn, i) => {
@@ -361,10 +481,15 @@
             const el = document.createElement('button');
             el.style.cssText = BUTTON_STYLE;
             if (btn.title) el.title = btn.title;
-            el.innerHTML = `<img src="${btn.icon}" style="${ICON_STYLE}" alt=""><span>${btn.text}</span>`;
+            // V2.5.0: 图标显示开关——设置齿轮始终显示图标，其他按钮按 showEngineIcons 控制
+            if (btn.alwaysShowIcon || showEngineIcons) {
+                el.innerHTML = `<img src="${btn.icon}" style="${ICON_STYLE}" alt=""><span>${btn.text}</span>`;
+            } else {
+                el.innerHTML = `<span>${btn.text}</span>`;
+            }
             el._handler = btn.handler;
-            el.addEventListener('mouseenter', e => { e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.color = '#5FE382'; e.currentTarget.querySelector('img').style.filter = GREEN_FILTER; });
-            el.addEventListener('mouseleave', e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#333'; e.currentTarget.querySelector('img').style.filter = 'none'; });
+            el.addEventListener('mouseenter', e => { e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.color = '#5FE382'; const img = e.currentTarget.querySelector('img'); if (img) img.style.filter = GREEN_FILTER; });
+            el.addEventListener('mouseleave', e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#333'; const img = e.currentTarget.querySelector('img'); if (img) img.style.filter = 'none'; });
             frag.appendChild(el);
         });
         toolbar.appendChild(frag);
