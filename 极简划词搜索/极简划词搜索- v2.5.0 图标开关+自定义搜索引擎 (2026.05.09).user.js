@@ -240,10 +240,10 @@
 
         const listDiv = document.createElement('div');
         listDiv.style.cssText = 'margin-bottom:12px; display:grid; grid-template-columns:repeat(2,1fr); gap:6px 12px;';
-        // 渲染引擎复选框列表（新增自定义引擎后需重新调用）
+        // 渲染引擎复选框列表（仅内置引擎，自定义引擎在下方的管理区）
         const renderEngineCheckboxes = () => {
             listDiv.innerHTML = '';
-            getAllEngines().forEach(engine => {
+            ALL_SEARCH_ENGINES.forEach(engine => {
                 const label = document.createElement('label');
                 label.style.cssText = 'display:flex; align-items:center; cursor:pointer; white-space:nowrap;';
                 const cb = document.createElement('input');
@@ -301,7 +301,7 @@
         extraDiv.append(iconDiv, highlightDiv, orderDiv);
         panelDiv.appendChild(extraDiv);
 
-        // ---- 自定义搜索引擎 ----
+        // ---- 自定义搜索引擎（带复选框 + 删除）----
         const customDiv = document.createElement('div');
         customDiv.style.cssText = 'border-top:1px solid #eee; padding-top:8px; margin-bottom:8px;';
         const customTitle = document.createElement('div');
@@ -321,21 +321,31 @@
             }
             engines.forEach((e, i) => {
                 const row = document.createElement('div');
-                row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:3px; font-size:12px;';
+                row.style.cssText = 'display:flex; align-items:center; margin-bottom:3px; font-size:12px;';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'engine-cb';
+                cb.value = e.name;
+                cb.checked = enabledEngineNames.includes(e.name);
+                cb.style.cssText = 'margin-right:4px; vertical-align:middle;';
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = `${e.icon || '🔍'} ${e.name}`;
                 nameSpan.style.cssText = 'flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
                 const delBtn = document.createElement('button');
                 delBtn.textContent = '✕';
-                delBtn.style.cssText = 'background:none; border:none; cursor:pointer; color:#c00; font-size:13px; padding:0 4px;';
+                delBtn.title = '删除此引擎';
+                delBtn.style.cssText = 'background:none; border:none; cursor:pointer; color:#c00; font-size:13px; padding:0 4px; margin-left:auto;';
                 delBtn.addEventListener('click', () => {
                     const list = GM_getValue('custom_engines', []);
                     list.splice(i, 1);
                     GM_setValue('custom_engines', list);
                     customEngines = list;
+                    // 同时从已启用列表中移除
+                    const idx = enabledEngineNames.indexOf(e.name);
+                    if (idx >= 0) { enabledEngineNames.splice(idx, 1); saveSearchEngineConfig(enabledEngineNames); }
                     renderCustomList();
                 });
-                row.append(nameSpan, delBtn);
+                row.append(cb, nameSpan, delBtn);
                 customListDiv.appendChild(row);
             });
         };
