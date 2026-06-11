@@ -20,6 +20,7 @@ ddrwin 的 Greasy Fork 油猴脚本仓库。
 | **关闭CSDN动态背景** | v1.1 | 关闭 CSDN 动态背景特效 + 隐藏右侧工具栏 | [Greasy Fork](https://greasyfork.org/scripts/571060) |
 | **豆包 & DeepSeek 全家桶 (Claude版)** | v1.1 | 自动专家 + Token 千分位 + 侧边栏守护 三合一（Claude 重构版） | - |
 | **豆包 & DeepSeek 全家桶 (deepseek版)** | v1.3 | 自动专家 + Token 千分位 + 侧边栏守护 三合一（deepseek 重构版） | - |
+| **Claude 对话简洁导出器** | v1.0.0 | Claude 对话导出为 Markdown/HTML，只保留对话和思考过程，过滤工具调用 | - |
 
 ### 🔒 私有脚本（暂不公开）
 
