@@ -10,8 +10,8 @@
 // @match                https://claude.ai/*
 // @grant                none
 // @run-at               document-idle
-// @downloadURL          https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.1.0%20(2026.06.11).user.js
-// @updateURL            https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.1.0%20(2026.06.11).meta.js
+// @downloadURL          https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.0%20(2026.06.11).user.js
+// @updateURL            https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.0%20(2026.06.11).meta.js
 // ==/UserScript==
 
 (function () {
@@ -34,6 +34,14 @@
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  // Strip code line numbers from tool result text (e.g. " 1│ foo", " 1| bar")
+  function stripLineNumbers(text) {
+    if (!text) return text;
+    // Removes leading line numbers in common formats:
+    //   "  N│ text"  or "  N| text"  or "  N: text"
+    return text.replace(/^[ \t]*\d{1,5}[│\|:][ \t]?/gm, '');
   }
 
   const _cp1252Rev = (() => {
@@ -259,13 +267,13 @@
         const c = b.content;
         if (Array.isArray(c)) {
           for (const item of c) {
-            if (item.type === 'text') s += `> ${item.text.replace(/\n/g, '\n> ')}\n`;
+            if (item.type === 'text') s += `> ${stripLineNumbers(item.text).replace(/\n/g, '\n> ')}\n`;
             else if (item.type === 'knowledge') s += `> 📚 ${item.title || item.name || '来源'}\n`;
           }
         } else if (typeof c === 'string') {
-          s += `> ${c.replace(/\n/g, '\n> ')}\n`;
+          s += `> ${stripLineNumbers(c).replace(/\n/g, '\n> ')}\n`;
         }
-        if (b.message) s += `> ${b.message.replace(/\n/g, '\n> ')}\n`;
+        if (b.message) s += `> ${stripLineNumbers(b.message).replace(/\n/g, '\n> ')}\n`;
         return s;
       }
       case 'web_search_tool_result': {
@@ -446,7 +454,7 @@
             }).join('\n')}</div>`;
           }
           for (const c of content) {
-            if (c.type === 'text' && !isPlaceholder(c.text)) body += `<div class="tool-result-text${errCls}">${parseMd(c.text)}</div>`;
+            if (c.type === 'text' && !isPlaceholder(c.text)) body += `<div class="tool-result-text${errCls}">${parseMd(stripLineNumbers(c.text))}</div>`;
             if (c.type === 'image') body += renderBlockHtmlFull(c);
             if (c.type === 'web_search_result') {
               let dom = ''; try { dom = new URL(c.url || '').hostname; } catch {}
@@ -454,9 +462,9 @@
             }
           }
         } else if (typeof content === 'string') {
-          body += `<div class="tool-result-text${errCls}">${parseMd(content)}</div>`;
+          body += `<div class="tool-result-text${errCls}">${parseMd(stripLineNumbers(content))}</div>`;
         }
-        if (b.message) body += `<div class="tool-result-text">${parseMd(b.message)}</div>`;
+        if (b.message) body += `<div class="tool-result-text">${parseMd(stripLineNumbers(b.message))}</div>`;
         if (!body) return '';
         return `<details class="block-container tool-result-block" open><summary><span class="bi">📋</span> 工具结果${b.is_error ? ' ❌' : ''}</summary><div class="block-body">${body}</div></details>`;
       }
@@ -473,9 +481,9 @@
 
       case 'code_execution_tool_result': {
         let body = '';
-        if (b.output) body += `<div class="exec-section"><div class="exec-label">输出</div><pre class="exec-pre"><code>${escapeHtml(b.output)}</code></pre></div>`;
-        if (b.return_value !== undefined) body += `<div class="exec-section"><div class="exec-label">返回值</div><pre class="exec-pre"><code>${escapeHtml(String(b.return_value))}</code></pre></div>`;
-        if (b.error) body += `<div class="exec-section"><div class="exec-label error-label">错误</div><pre class="exec-pre error-pre"><code>${escapeHtml(b.error)}</code></pre></div>`;
+        if (b.output) body += `<div class="exec-section"><div class="exec-label">输出</div><pre class="exec-pre"><code>${escapeHtml(stripLineNumbers(b.output))}</code></pre></div>`;
+        if (b.return_value !== undefined) body += `<div class="exec-section"><div class="exec-label">返回值</div><pre class="exec-pre"><code>${escapeHtml(stripLineNumbers(String(b.return_value)))}</code></pre></div>`;
+        if (b.error) body += `<div class="exec-section"><div class="exec-label error-label">错误</div><pre class="exec-pre error-pre"><code>${escapeHtml(stripLineNumbers(b.error))}</code></pre></div>`;
         if (!body) return '';
         return `<details class="block-container code-exec-block" open><summary><span class="bi">⚡</span> 代码执行结果</summary><div class="block-body">${body}</div></details>`;
       }
