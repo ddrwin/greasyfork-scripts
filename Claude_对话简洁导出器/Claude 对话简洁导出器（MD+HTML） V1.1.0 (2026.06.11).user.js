@@ -39,10 +39,10 @@
   // Strip code line numbers from tool result text
   function stripLineNumbers(text) {
     if (!text) return text;
-    // Removes leading line numbers in common formats:
-    //   "N content"    or "  N│ content"  or "  N: content"
-    //   "  N| content" or "N│content"
-    return text.replace(/^[ \t]*\d{1,5}[ │\|:][ \t]?/gm, '');
+    // Removes leading line numbers:
+    //   "N content"          "  N│ content"      "  N: content"
+    //   "  N| content"       "N│content"          "N" (bare number on its own line)
+    return text.replace(/^[ \t]*\d{1,5}[ │\|:][ \t]?/gm, '').replace(/^\d{1,5}\s*$/gm, '');
   }
 
   const _cp1252Rev = (() => {
