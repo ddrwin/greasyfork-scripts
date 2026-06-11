@@ -36,12 +36,13 @@
     return (bytes / 1048576).toFixed(1) + ' MB';
   }
 
-  // Strip code line numbers from tool result text (e.g. " 1│ foo", " 1| bar")
+  // Strip code line numbers from tool result text
   function stripLineNumbers(text) {
     if (!text) return text;
     // Removes leading line numbers in common formats:
-    //   "  N│ text"  or "  N| text"  or "  N: text"
-    return text.replace(/^[ \t]*\d{1,5}[│\|:][ \t]?/gm, '');
+    //   "N content"    or "  N│ content"  or "  N: content"
+    //   "  N| content" or "N│content"
+    return text.replace(/^[ \t]*\d{1,5}[ │\|:][ \t]?/gm, '');
   }
 
   const _cp1252Rev = (() => {
