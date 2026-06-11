@@ -10,8 +10,8 @@
 // @match                https://claude.ai/*
 // @grant                none
 // @run-at               document-idle
-// @downloadURL          https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.0%20(2026.06.11).user.js
-// @updateURL            https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.0%20(2026.06.11).meta.js
+// @downloadURL          https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.1.0%20(2026.06.11).user.js
+// @updateURL            https://raw.githubusercontent.com/ddrwin/greasyfork-scripts/main/Claude_%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8/Claude%20%E5%AF%B9%E8%AF%9D%E7%AE%80%E6%B4%81%E5%AF%BC%E5%87%BA%E5%99%A8%EF%BC%88MD+HTML%EF%BC%89%20V1.1.0%20(2026.06.11).meta.js
 // ==/UserScript==
 
 (function () {
